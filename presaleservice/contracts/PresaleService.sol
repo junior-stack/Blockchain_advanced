@@ -13,6 +13,7 @@ contract PresaleService is AccessControl{
   uint public usageFee;
   address public immutable override WETH;
   address public immutable override router;
+  address public admin;
 
   struct presaleInfo{
     uint start;
@@ -20,6 +21,7 @@ contract PresaleService is AccessControl{
     uint price;
     uint amount;
     uint weth;
+    bool ended;
     address tokenaddress;
   }
   mapping(uint => presaleInfo) public presaleAddress;
@@ -28,6 +30,7 @@ contract PresaleService is AccessControl{
     usageFee = initialusageFee;
     WETH = _WETH;
     _setupRole(DEFAULT_ADMIN_ROLE, initialadmin);
+    adin = initialadmin;
     router = _router;
   }
 
@@ -55,17 +58,21 @@ contract PresaleService is AccessControl{
   }
 
   function withdraw(uint presaleId) external{
+    require(presaleAddress[presaleId].ended, "This presale has not been ended");
     IERC20(presaleAddress[presaleId].tokenaddress).transfer(msg.sender, IERC(presaleAddress[presaleId].tokenaddress).balanceOf(address(this)));
   }
 
   function endPresale(uint presaleId) external{
     require(block.timestamp > presaleAddress[presaleId].end, "The end timestamp has not been passed yet");
-    uint tokenAmountMantissa = presaleAddress[presaleId].weth / presaleAddress[presaleId].price;
+    presaleAddress[presaleId].ended = true;
+    uint adminfee = presaleAddress[presaleId].weth - usageFee;
+    uint tokenAmountMantissa = adminfee / presaleAddress[presaleId].price;
 
     // create pairs
     // send eth to the pair
     // send the token of tokenAmount from  the user to the pair
-    IUniswapV2Router02(router).addLiquidityETH(presaleAddress[presaleId].tokenaddress, tokenAmountMantissa, tokenAmountMantissa, presaleAddress[presaleId].weth, msg.sender, block.timestamp);
+    IERC20(WETH).transferFrom(address(this), admin, ussageFee);
+    IUniswapV2Router02(router).addLiquidityETH(presaleAddress[presaleId].tokenaddress, tokenAmountMantissa, tokenAmountMantissa, adminfee, msg.sender, block.timestamp);
 
   }
 
