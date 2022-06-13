@@ -11,8 +11,8 @@ contract PresaleService is AccessControl{
   using Counters for Counters.Counter;
   Counters.Counter presaleId;
   uint public usageFee;
-  address public immutable override WETH;
-  address public immutable override router;
+  address public immutable WETH;
+  address public immutable router;
   address public admin;
 
   struct presaleInfo{
@@ -30,7 +30,7 @@ contract PresaleService is AccessControl{
     usageFee = initialusageFee;
     WETH = _WETH;
     _setupRole(DEFAULT_ADMIN_ROLE, initialadmin);
-    adin = initialadmin;
+    admin = initialadmin;
     router = _router;
   }
 
@@ -40,39 +40,39 @@ contract PresaleService is AccessControl{
     require(start.length == tokenAmounts.length);
     require(start.length == tokenAddress.length);
     for(uint i; i < start.length; i++){
-      presaleAddress[presaleId.current()] = presaleInfo(start[i], end[i], price[i], amount[i], tokenAddress[i]);
-      tokenAddress.transfer(address(this), tokenAddress[i].balanceOf(msg.sender));
+      presaleAddress[presaleId.current()] = presaleInfo(start[i], end[i], price[i], tokenAmounts[i], 0, false, address(tokenAddress[i]));
+      IERC20(tokenAddress[i]).transfer(address(this), tokenAddress[i].balanceOf(msg.sender));
       presaleId.increment();
     }
   }
 
-  function buy(uint presaleId, uint amountMantissa) external{
-    require(block.timestamp >= presaleAddress[presaleId], "the current time has not passed the start time of this presale");
-    require(block.timestamp <= presaleAddres[presaleId], "the current time has passed the end time of this presale");
+  function buy(uint presaleid, uint amountMantissa) external{
+    require(block.timestamp >= presaleAddress[presaleid].start, "the current time has not passed the start time of this presale");
+    require(block.timestamp <= presaleAddress[presaleid].end, "the current time has passed the end time of this presale");
 
-    uint wethAmount = presaleAddress[presaleId].price * amountMantissa;
-    presaleAddress[presaleId].weth = wethAmount;
+    uint wethAmount = presaleAddress[presaleid].price * amountMantissa;
+    presaleAddress[presaleid].weth = wethAmount;
     IERC20(WETH).transferFrom(msg.sender, address(this), wethAmount);
-    IERC20(presaleAddress[presaleId].tokenaddress).transfer(msg.sender, amountMantissa);
+    IERC20(presaleAddress[presaleid].tokenaddress).transfer(msg.sender, amountMantissa);
     
   }
 
-  function withdraw(uint presaleId) external{
-    require(presaleAddress[presaleId].ended, "This presale has not been ended");
-    IERC20(presaleAddress[presaleId].tokenaddress).transfer(msg.sender, IERC(presaleAddress[presaleId].tokenaddress).balanceOf(address(this)));
+  function withdraw(uint presaleid) external{
+    require(presaleAddress[presaleid].ended, "This presale has not been ended");
+    IERC20(presaleAddress[presaleid].tokenaddress).transfer(msg.sender, IERC20(presaleAddress[presaleid].tokenaddress).balanceOf(address(this)));
   }
 
-  function endPresale(uint presaleId) external{
-    require(block.timestamp > presaleAddress[presaleId].end, "The end timestamp has not been passed yet");
-    presaleAddress[presaleId].ended = true;
-    uint adminfee = presaleAddress[presaleId].weth - usageFee;
-    uint tokenAmountMantissa = adminfee / presaleAddress[presaleId].price;
+  function endPresale(uint presaleid) external{
+    require(block.timestamp > presaleAddress[presaleid].end, "The end timestamp has not been passed yet");
+    presaleAddress[presaleid].ended = true;
+    uint adminfee = presaleAddress[presaleid].weth - usageFee;
+    uint tokenAmountMantissa = adminfee / presaleAddress[presaleid].price;
 
     // create pairs
     // send eth to the pair
     // send the token of tokenAmount from  the user to the pair
-    IERC20(WETH).transferFrom(address(this), admin, ussageFee);
-    IUniswapV2Router02(router).addLiquidityETH(presaleAddress[presaleId].tokenaddress, tokenAmountMantissa, tokenAmountMantissa, adminfee, msg.sender, block.timestamp);
+    IERC20(WETH).transferFrom(address(this), admin, usageFee);
+    IUniswapV2Router02(router).addLiquidityETH(presaleAddress[presaleid].tokenaddress, tokenAmountMantissa, tokenAmountMantissa, adminfee, msg.sender, block.timestamp);
 
   }
 
