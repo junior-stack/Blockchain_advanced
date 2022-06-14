@@ -11,10 +11,10 @@ import { useState } from "react";
 import "./Buyer.css";
 
 const Buyer = (props) => {
-  const [token, setToken] = useState("ETH");
+  const [presaleID, setPresaleID] = useState("");
 
-  const handleChange = (event) => {
-    setToken(event.target.value);
+  const changePresaleID = (e) => {
+    setPresaleID(e.target.value);
   };
 
   return (
@@ -67,6 +67,8 @@ const Buyer = (props) => {
             shrink: true,
           }}
           variant="filled"
+          value={presaleID}
+          onChange={changePresaleID}
         />
       </ModalBox>
     </LayOut>

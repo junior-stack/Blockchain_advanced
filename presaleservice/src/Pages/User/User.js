@@ -3,7 +3,7 @@ import { TextField } from "@mui/material";
 import ModalBox from "../../Components/ModalBox/ModalBox";
 import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -34,7 +34,7 @@ const User = (props) => {
   };
 
   const deletion = (index) => () => {
-    if (tokenList.length == 1) return;
+    if (tokenList.length === 1) return;
     const arr = [...tokenList];
     arr.splice(index, 1);
     setTokenList(arr);
@@ -55,6 +55,18 @@ const User = (props) => {
   const setEnd = (index) => (newValue) => {
     const arr = [...tokenList];
     arr[index].end = newValue.getTime();
+    setTokenList(arr);
+  };
+
+  const setTokenAmount = (index) => (event) => {
+    const arr = [...tokenList];
+    arr[index].tokenAmount = event.target.value;
+    setTokenList(arr);
+  };
+
+  const setTokenAddress = (index) => (event) => {
+    const arr = [...tokenList];
+    arr[index].tokenAddress = event.target.value;
     setTokenList(arr);
   };
 
@@ -108,6 +120,7 @@ const User = (props) => {
               }}
               variant="filled"
               value={e.tokenAmount}
+              onChange={setTokenAmount(index)}
             />
             <TextField
               id="filled-number"
@@ -123,6 +136,7 @@ const User = (props) => {
               }}
               variant="filled"
               value={e.tokenAddress}
+              onChange={setTokenAddress(index)}
             />
             <Button
               sx={{ height: "100px", bgcolor: "#f0f0f0" }}

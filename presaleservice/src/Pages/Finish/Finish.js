@@ -1,9 +1,16 @@
 import LayOut from "../../Components/LayOut/LayOut";
 import { Button, TextField } from "@mui/material";
 import ModalBox from "../../Components/ModalBox/ModalBox";
+import { useState } from "react";
 import "./Finish.css";
 
 const Finish = () => {
+  const [presaleID, setPresaleID] = useState("");
+
+  const changePresaleID = (e) => {
+    setPresaleID(e.target.value);
+  };
+
   return (
     <LayOut>
       <ModalBox>
@@ -31,6 +38,8 @@ const Finish = () => {
             shrink: true,
           }}
           variant="filled"
+          value={presaleID}
+          onChange={changePresaleID}
         />
       </ModalBox>
     </LayOut>

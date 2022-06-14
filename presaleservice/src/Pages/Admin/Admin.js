@@ -1,8 +1,15 @@
 import LayOut from "../../Components/LayOut/LayOut";
 import ModalBox from "../../Components/ModalBox/ModalBox";
 import { TextField, Button } from "@mui/material";
+import { useState } from "react";
 
 const Admin = (props) => {
+  const [usageFee, setUsageFee] = useState("");
+
+  const changeUsageFee = (event) => {
+    setUsageFee(event.target.value);
+  };
+
   return (
     <LayOut>
       <ModalBox>
@@ -17,6 +24,8 @@ const Admin = (props) => {
           }}
           sx={{ height: "200px", borderRadius: "100px" }}
           variant="filled"
+          value={usageFee}
+          onChange={changeUsageFee}
         />
         <Button variant="contained" sx={{ height: "100px" }}>
           Set
