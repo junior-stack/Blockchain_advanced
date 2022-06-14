@@ -1,3 +1,8 @@
 .Amount .MuiInputLabel-root {
   font-size: 50px;
 }
+
+.MuiOutlinedInput-root input {
+  height: 200px;
+  font-size: 50px;
+}

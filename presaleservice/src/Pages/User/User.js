@@ -3,8 +3,11 @@ import { TextField } from "@mui/material";
 import ModalBox from "../../Components/ModalBox/ModalBox";
 import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import "./User.css";
 
 const User = (props) => {
@@ -43,39 +46,38 @@ const User = (props) => {
     setTokenList(arr);
   };
 
+  const setStart = (index) => (newValue) => {
+    const arr = [...tokenList];
+    arr[index].start = newValue.getTime();
+    setTokenList(arr);
+  };
+
+  const setEnd = (index) => (newValue) => {
+    const arr = [...tokenList];
+    arr[index].end = newValue.getTime();
+    setTokenList(arr);
+  };
+
   return (
     <LayOut>
       {tokenList.map((e, index) => {
         return (
           <ModalBox key={index}>
             <h1>Presale Token:</h1>
-            <TextField
-              id="filled-number"
-              type="number"
-              className="Amount"
-              label="Start"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={{ height: "200px", borderRadius: "100px" }}
-              variant="filled"
-              value={e.start.toString()}
-            />
-            <TextField
-              id="filled-number"
-              type="number"
-              className="Amount"
-              label="End"
-              sx={{
-                height: "200px",
-                borderRadius: "20px",
-              }}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              variant="filled"
-              value={e.end.toString()}
-            />
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DateTimePicker
+                sx={{ height: "200px" }}
+                value={new Date(e.start)}
+                onChange={setStart(index)}
+                renderInput={(params) => <TextField {...params} />}
+              />
+              <DateTimePicker
+                sx={{ height: "200px" }}
+                value={new Date(e.end)}
+                onChange={setEnd(index)}
+                renderInput={(params) => <TextField {...params} />}
+              />
+            </LocalizationProvider>
             <TextField
               id="filled-number"
               type="number"
