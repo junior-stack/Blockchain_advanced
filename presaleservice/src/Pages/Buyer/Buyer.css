@@ -9,3 +9,7 @@
 .css-19mk8g1-MuiInputBase-root-MuiFilledInput-root:before {
   border-bottom: 0px !important;
 }
+
+.Amount .MuiInputLabel-root {
+  font-size: 50px;
+}

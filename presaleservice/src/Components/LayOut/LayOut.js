@@ -8,7 +8,9 @@ const LayOut = (props) => {
     <div style={{ width: "100%" }}>
       <NavBar />
       <Container sx={{ paddingTop: "200px" }}>
-        <Stack>{props.children}</Stack>
+        <Stack direction="column" spacing={8}>
+          {props.children}
+        </Stack>
       </Container>
     </div>
   );

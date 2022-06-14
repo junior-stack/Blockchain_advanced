@@ -24,6 +24,8 @@ const Buyer = (props) => {
         <TextField
           id="filled-number"
           type="number"
+          className="Amount"
+          label="Token Amount"
           InputLabelProps={{
             shrink: true,
           }}
@@ -33,6 +35,8 @@ const Buyer = (props) => {
         <TextField
           id="filled-number"
           type="number"
+          className="Amount"
+          label="ETH amount"
           sx={{
             height: "200px",
             borderRadius: "20px",
@@ -45,31 +49,25 @@ const Buyer = (props) => {
         <Button variant="contained" sx={{ height: "100px" }}>
           Buy
         </Button>
-
-        <Stack
-          sx={{ position: "absolute", right: "180px", top: "380px" }}
-          direction="row"
-          spacing={2}
-        >
-          <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
-            <InputLabel id="demo-simple-select-filled-label">
-              Select a Token
-            </InputLabel>
-            <Select
-              labelId="demo-simple-select-filled-label"
-              id="demo-simple-select-filled"
-              onChange={handleChange}
-              value={token}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              <MenuItem value={"DAI"}>DAI</MenuItem>
-              <MenuItem value={"Solana"}>Solana</MenuItem>
-              <MenuItem value={"ERC"}>ERC</MenuItem>
-            </Select>
-          </FormControl>
-        </Stack>
+        <TextField
+          id="filled-number"
+          type="number"
+          label="Presale ID"
+          sx={{
+            width: "120px",
+            m: 1,
+            height: "70px",
+            borderRadius: "20px",
+            position: "absolute",
+            right: "180px",
+            top: "20px",
+            fontSize: "30px",
+          }}
+          InputLabelProps={{
+            shrink: true,
+          }}
+          variant="filled"
+        />
       </ModalBox>
     </LayOut>
   );

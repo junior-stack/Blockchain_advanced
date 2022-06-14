@@ -36,6 +36,14 @@ const NavBar = (props) => {
     navigate("/buyer");
   };
 
+  const toFinish = async () => {
+    navigate("/finish");
+  };
+
+  const toAdmin = async () => {
+    navigate("/admin");
+  };
+
   return (
     <AppBar position="static">
       <Toolbar disableGutters>
@@ -77,10 +85,17 @@ const NavBar = (props) => {
           </Button>
           <Button
             key={2}
-            onClick={handleCloseNavMenu}
+            onClick={toAdmin}
             sx={{ my: 2, color: "white", display: "block" }}
           >
             Admin
+          </Button>
+          <Button
+            key={3}
+            onClick={toFinish}
+            sx={{ my: 2, color: "white", display: "block" }}
+          >
+            Finish
           </Button>
         </Box>
       </Toolbar>
