@@ -6,27 +6,12 @@ import { Stack, Toolbar } from "@mui/material";
 import { Box, Menu, MenuItem, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import * as React from "react";
+import Context from "../../Context/Context";
 
 const NavBar = (props) => {
   let navigate = useNavigate();
 
-  const [anchorElNav, setAnchorElNav] = React.useState(null);
-  const [anchorElUser, setAnchorElUser] = React.useState(null);
-
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-  };
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
+  const { AccountAddress, setAccountAddress } = React.useContext(Context);
 
   const toUser = async () => {
     navigate("/user");
@@ -42,6 +27,23 @@ const NavBar = (props) => {
 
   const toAdmin = async () => {
     navigate("/admin");
+  };
+
+  const connectWallet = async () => {
+    const { ethereum } = window;
+    if (Boolean(ethereum && ethereum.isMetaMask)) {
+      const accounts = await ethereum.request({ method: "eth_accounts" });
+      if (!accounts) {
+        window.alert("You need to log into your metamask first");
+      } else if (accounts[0] >= 0) {
+        setAccountAddress(accounts[0]);
+        ethereum.on("accountsChanged", function (accounts) {
+          setAccountAddress(accounts[0]);
+        });
+      }
+    } else {
+      window.alert("You need to install your metamask");
+    }
   };
 
   return (
@@ -62,7 +64,6 @@ const NavBar = (props) => {
             aria-label="account of current user"
             aria-controls="menu-appbar"
             aria-haspopup="true"
-            onClick={handleOpenNavMenu}
             color="inherit"
           >
             <MenuIcon />
@@ -97,6 +98,31 @@ const NavBar = (props) => {
           >
             Finish
           </Button>
+          {AccountAddress === "" ? (
+            <Button
+              sx={{
+                position: "relative",
+                color: "white",
+                display: "block",
+                right: "-2000px",
+              }}
+              onClick={connectWallet}
+            >
+              Connect Wallet
+            </Button>
+          ) : (
+            <Box
+              sx={{
+                position: "relative",
+                color: "white",
+                display: "block",
+                right: "-1800px",
+                paddingTop: "20px",
+              }}
+            >
+              {AccountAddress}{" "}
+            </Box>
+          )}
         </Box>
       </Toolbar>
     </AppBar>
