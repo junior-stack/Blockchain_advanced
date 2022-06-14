@@ -2,11 +2,14 @@ import AppBar from "@mui/material/AppBar";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Container } from "@mui/system";
-import { Toolbar } from "@mui/material";
+import { Stack, Toolbar } from "@mui/material";
 import { Box, Menu, MenuItem, Typography, Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import * as React from "react";
 
 const NavBar = (props) => {
+  let navigate = useNavigate();
+
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
 
@@ -23,6 +26,14 @@ const NavBar = (props) => {
 
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
+  };
+
+  const toUser = async () => {
+    navigate("/user");
+  };
+
+  const toBuyer = async () => {
+    navigate("/buyer");
   };
 
   return (
@@ -52,10 +63,24 @@ const NavBar = (props) => {
         <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
           <Button
             key={0}
-            onClick={handleCloseNavMenu}
+            onClick={toUser}
             sx={{ my: 2, color: "white", display: "block" }}
           >
             user
+          </Button>
+          <Button
+            key={1}
+            onClick={toBuyer}
+            sx={{ my: 2, color: "white", display: "block" }}
+          >
+            Buyer
+          </Button>
+          <Button
+            key={2}
+            onClick={handleCloseNavMenu}
+            sx={{ my: 2, color: "white", display: "block" }}
+          >
+            Admin
           </Button>
         </Box>
       </Toolbar>
