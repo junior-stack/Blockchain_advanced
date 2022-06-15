@@ -1,7 +1,6 @@
 const { expect } = require("chai");
-const { network } = require("hardhat");
+const { network, ethers } = require("hardhat");
 const { ChainId, Token } = require("@uniswap/sdk");
-const { ethers } = require("ethers");
 
 describe("start presale", function () {
   let presaleService, admin, usr1, usr2;
@@ -222,5 +221,120 @@ describe("end presale", function () {
     expect(newAdminEthBalance - oldAdminEthBalance).to.equal(1000000);
     expect(reserve0).to.equal(1);
     expect(reserve1).to.equal(5);
+  });
+});
+
+describe("withdraw", function () {
+  let presaleService, admin, usr1, usr2;
+  let mokTokenI, mokTokenII, mokTokenIII;
+  this.timeout(40000);
+
+  beforeEach(async () => {
+    const PresaleService = await ethers.getContractFactory("PresaleService");
+    const MokTokenI = await ethers.getContractFactory("MokTokenI");
+    const MokTokenII = await ethers.getContractFactory("MokTokenII");
+    const MokTokenIII = await ethers.getContractFactory("MokTokenIII");
+
+    [admin, usr1, usr2] = await ethers.getSigners();
+
+    const weth = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+    const router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+
+    mokTokenI = await MokTokenI.deploy(500 * Math.pow(10, 18));
+    mokTokenII = await MokTokenII.deploy(500 * Math.pow(10, 18));
+    mokTokenIII = await MokTokenIII.deploy(500 * Math.pow(10, 18));
+    presaleService = await PresaleService.deploy(
+      1000000,
+      admin.address,
+      weth,
+      router
+    );
+    const start = Date.now() + 20 * 60 * 1000;
+    const end = Date.now() + 60 * 60 * 1000;
+    await presaleService
+      .connect(usr2)
+      .startPresale(
+        [start],
+        [end],
+        [5],
+        [2 * Math.pow(10, 12)],
+        [mokTokenIII.address]
+      );
+  });
+
+  it("should fail because the presale has not been ended", async () => {
+    await expect(presaleService.connect(usr2).withdraw(0)).to.be.revertedWith(
+      "This presale has not been ended"
+    );
+  });
+
+  it("should fail because the withdrawer is not the creator", async () => {
+    await network.provider.send("evm_increaseTime", [30 * 60]);
+    await network.provider.send("evm_mine");
+    await presaleService.endPresale(0);
+    await expect(presaleService.wihdraw(0)).to.be.revertedWith(
+      "Only the creator could withdraw"
+    );
+  });
+
+  it("should succeed and correctly transfer the token", async () => {
+    await network.provider.send("evm_increaseTime", [30 * 60]);
+    await network.provider.send("evm_mine");
+    await presaleService.endPresale(0);
+    const tokenAmount = await mokTokenIII.balanceOf(presaleService.address);
+    await presaleService.connect(usr2).withdraw(0);
+    const balance = await mokTokenIII.balanceOf(usr2.address);
+    expect(balance).to.equal(tokenAmount);
+  });
+});
+
+describe("changeUsageFee", function () {
+  let presaleService, admin, usr1, usr2;
+  let mokTokenI, mokTokenII, mokTokenIII;
+  this.timeout(40000);
+
+  beforeEach(async () => {
+    const PresaleService = await ethers.getContractFactory("PresaleService");
+    const MokTokenI = await ethers.getContractFactory("MokTokenI");
+    const MokTokenII = await ethers.getContractFactory("MokTokenII");
+    const MokTokenIII = await ethers.getContractFactory("MokTokenIII");
+
+    [admin, usr1, usr2] = await ethers.getSigners();
+
+    const weth = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+    const router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+
+    mokTokenI = await MokTokenI.deploy(500 * Math.pow(10, 18));
+    mokTokenII = await MokTokenII.deploy(500 * Math.pow(10, 18));
+    mokTokenIII = await MokTokenIII.deploy(500 * Math.pow(10, 18));
+    presaleService = await PresaleService.deploy(
+      1000000,
+      admin.address,
+      weth,
+      router
+    );
+    const start = Date.now() + 20 * 60 * 1000;
+    const end = Date.now() + 60 * 60 * 1000;
+    await presaleService
+      .connect(usr2)
+      .startPresale(
+        [start],
+        [end],
+        [5],
+        [2 * Math.pow(10, 12)],
+        [mokTokenIII.address]
+      );
+  });
+
+  it("should fail because the setter is not the admin", async () => {
+    await expect(
+      presaleService.connect(usr1.address).changeUsageFee(20)
+    ).to.be.revertedWith("Only the admin could change usage fee");
+  });
+
+  it("should succeed and change the usageFee", async () => {
+    await presaleService.connect(admin.address).changeUsageFee(20);
+    const newUsageFee = await presaleService.usageFee();
+    expect(newUsageFee).to.equal(20);
   });
 });
