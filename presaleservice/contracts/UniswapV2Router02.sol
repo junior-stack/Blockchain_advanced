@@ -2,7 +2,7 @@
 pragma solidity ^0.6.6;
 
 import "@uniswap/v2-periphery/contracts/libraries/SafeMath.sol";
-import "@uniswap/v2-periphery/contracts/libraries/UniswapV2Library.sol";
+import "./../libraries/UniswapV2Library.sol";
 import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import "@uniswap/v2-periphery/contracts/interfaces/IWETH.sol";

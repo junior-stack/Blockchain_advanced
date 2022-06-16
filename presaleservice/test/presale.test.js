@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { network, waffle } = require("hardhat");
 const { Contract } = require("ethers");
+const UniswapV2Pair = require("../src/artifacts/@uniswap/v2-core/contracts/UniswapV2Pair.sol/UniswapV2Pair.json");
 
 describe("start presale", function () {
   let presaleService, admin, usr1, usr2;
