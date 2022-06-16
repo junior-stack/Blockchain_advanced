@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Unlicense
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -14,7 +14,7 @@ contract PresaleService is AccessControl{
   Counters.Counter presaleId;
   uint public usageFee;
   address public immutable router;
-  address public admin;
+  address payable admin;
 
   struct presaleInfo{
     uint start;
@@ -31,7 +31,7 @@ contract PresaleService is AccessControl{
   constructor(uint initialusageFee, address initialadmin, address _router){
     usageFee = initialusageFee;
     _setupRole(DEFAULT_ADMIN_ROLE, initialadmin);
-    admin = initialadmin;
+    admin = payable(initialadmin);
     router = _router;
   }
 
@@ -42,12 +42,12 @@ contract PresaleService is AccessControl{
     require(start.length == tokenAddress.length, "the entered inputs should have the same length");
     for(uint i; i < start.length; i++){
       presaleAddress[presaleId.current()] = presaleInfo(start[i], end[i], price[i], tokenAmounts[i], 0, false, address(tokenAddress[i]), msg.sender);
-      tokenAddress[i].safeTransfer(address(this), tokenAddress[i].balanceOf(msg.sender));
+      tokenAddress[i].safeTransferFrom(msg.sender, address(this), tokenAddress[i].balanceOf(msg.sender));
       presaleId.increment();
     }
   }
 
-  function buy(uint presaleid, uint amountMantissa) external{
+  function buy(uint presaleid, uint amountMantissa) payable public{
     require(block.timestamp >= presaleAddress[presaleid].start, "the current time has not passed the start time of this presale");
     require(block.timestamp <= presaleAddress[presaleid].end, "the current time has passed the end time of this presale");
 
@@ -67,19 +67,23 @@ contract PresaleService is AccessControl{
     require(block.timestamp > presaleAddress[presaleid].end, "The end timestamp has not been passed yet");
     presaleAddress[presaleid].ended = true;
     uint ethToSend = presaleAddress[presaleid].weth - usageFee;
-    uint tokenAmountMantissa = ethToSend / presaleAddress[presaleid].price;
+    uint tokenAmountMantissa = presaleAddress[presaleid].weth / presaleAddress[presaleid].price;
 
     // create pairs
     // send eth to the pair
     // send the token of tokenAmount from  the user to the pair
     admin.transfer(usageFee);
-    IUniswapV2Router02(router).addLiquidityETH(presaleAddress[presaleid].tokenaddress, tokenAmountMantissa, tokenAmountMantissa, ethToSend, msg.sender, block.timestamp + 20 minutes);
+    IUniswapV2Router02(router).addLiquidityETH{value: ethToSend}(presaleAddress[presaleid].tokenaddress, tokenAmountMantissa, tokenAmountMantissa, ethToSend, msg.sender, block.timestamp + 20 minutes);
 
   }
 
   function changeUsageFee(uint newUsageFee) external{
     require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Only the admin could change usage fee");
     usageFee = newUsageFee;
+  }
+
+  function PresaleId() view public returns (uint){
+    return presaleId.current();
   }
 
 

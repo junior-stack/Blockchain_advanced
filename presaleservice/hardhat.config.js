@@ -18,7 +18,22 @@ const ADMIN = result.parsed.REACT_APP_ADMIN;
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.4",
+  solidity: {
+    compilers: [
+      {
+        version: "0.8.4",
+      },
+      {
+        version: "0.6.6",
+      },
+      {
+        version: "0.4.18",
+      },
+      {
+        version: "0.5.16",
+      },
+    ],
+  },
   etherscan: {
     apiKey: "KCW4EIP2RMWJPPDCSNHGIJ21WIXQCEVTX6",
   },

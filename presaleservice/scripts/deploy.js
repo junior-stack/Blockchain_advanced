@@ -6,20 +6,12 @@
 const hre = require("hardhat");
 
 async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
-
   // We get the contract to deploy
   const PresaleService = await ethers.getContractFactory("PresaleService");
   [admin, usr1, usr2] = await ethers.getSigners();
   const presaleService = await PresaleService.deploy(
     100,
     admin.address,
-    "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
     "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
   );
 
