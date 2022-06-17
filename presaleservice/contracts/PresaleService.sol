@@ -28,6 +28,12 @@ contract PresaleService is AccessControl{
   }
   mapping(uint => presaleInfo) public presaleAddress;
 
+  event StartPresale(uint[] starttime, uint[] endtime, uint[] prices, uint[] tokenAmounts, ERC20[] tokenAddresses);
+  event Buy(address buyer, uint presaleId, uint price, uint amountMantissa);
+  event EndPresale(uint presaleID, uint ethToSend, uint tokenAmountMantissa, address token);
+  event WithDraw(uint presaleId, uint balance);
+  event ChangeUsageFee(uint presaleId, uint oldUsageFee, uint newUsageFee);
+
   constructor(uint initialusageFee, address initialadmin, address _router){
     usageFee = initialusageFee;
     _setupRole(DEFAULT_ADMIN_ROLE, initialadmin);
@@ -45,6 +51,8 @@ contract PresaleService is AccessControl{
       tokenAddress[i].safeTransferFrom(msg.sender, address(this), tokenAddress[i].balanceOf(msg.sender));
       presaleId.increment();
     }
+
+    emit StartPresale(start, end, price, tokenAmounts, tokenAddress);
   }
 
   function buy(uint presaleid, uint amountMantissa) payable public{
@@ -55,12 +63,18 @@ contract PresaleService is AccessControl{
     require(msg.value >= wethAmount, "You should send more eth to purchase this amount of token");
     presaleAddress[presaleid].weth = wethAmount;
     ERC20(presaleAddress[presaleid].tokenaddress).safeTransfer(msg.sender, amountMantissa);
+
+    emit Buy(msg.sender, presaleid, presaleAddress[presaleid].price, amountMantissa);
+
   }
 
   function withdraw(uint presaleid) external{
     require(msg.sender == presaleAddress[presaleid].creator, "Only the creator could withdraw");
     require(presaleAddress[presaleid].ended, "This presale has not been ended");
-    ERC20(presaleAddress[presaleid].tokenaddress).safeTransfer(msg.sender, IERC20(presaleAddress[presaleid].tokenaddress).balanceOf(address(this)));
+    uint balances = IERC20(presaleAddress[presaleid].tokenaddress).balanceOf(address(this));
+    ERC20(presaleAddress[presaleid].tokenaddress).safeTransfer(msg.sender, balances);
+
+    emit WithDraw(presaleId.current() - 1, balances);
   }
 
   function endPresale(uint presaleid) external{
@@ -75,11 +89,15 @@ contract PresaleService is AccessControl{
     admin.transfer(usageFee);
     IUniswapV2Router02(router).addLiquidityETH{value: ethToSend}(presaleAddress[presaleid].tokenaddress, tokenAmountMantissa, tokenAmountMantissa, ethToSend, msg.sender, block.timestamp + 20 minutes);
 
+    emit EndPresale(presaleid, ethToSend, tokenAmountMantissa, presaleAddress[presaleid].tokenaddress);
   }
 
   function changeUsageFee(uint newUsageFee) external{
     require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Only the admin could change usage fee");
+    uint oldUsageFee = usageFee;
     usageFee = newUsageFee;
+
+    emit ChangeUsageFee(presaleId.current(), oldUsageFee, newUsageFee);
   }
 
   function PresaleId() view public returns (uint){

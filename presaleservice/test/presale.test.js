@@ -54,7 +54,7 @@ describe("tests for presaleService contract: ", function () {
       const start = Date.now();
       const end = Date.now() + 20 * 60 * 1000;
       await mokTokenI.transferFrom(mokTokenI.address, usr1.address, 200);
-      await presaleService
+      await expect(presaleService
         .connect(usr1)
         .startPresale(
           [start],
@@ -62,7 +62,7 @@ describe("tests for presaleService contract: ", function () {
           [5],
           [2 * Math.pow(10, 12)],
           [mokTokenI.address]
-        );
+        )).to.emit(presaleService, "StartPresale").withArgs([start], [end], [5], [2 * Math.pow(10, 12)], [mokTokenI.address]);
       const presaleAddress1 = await presaleService.presaleAddress(0);
       const presaleId = await presaleService.PresaleId();
       // check the state is correct
@@ -80,15 +80,15 @@ describe("tests for presaleService contract: ", function () {
       const end = Date.now() + 20 * 60 * 1000;
       await mokTokenII.transferFrom(mokTokenII.address, usr1.address, 200);
       const OldMokTokenIIBalance = await mokTokenII.balanceOf(usr1.address);
-      await presaleService
+      await expect(presaleService
         .connect(usr1)
         .startPresale(
           [start],
           [end],
           [5],
           [2 * Math.pow(10, 12)],
-          [mokTokenII.address]
-        );
+          [mokTokenI.address]
+        )).to.emit(presaleService, "StartPresale").withArgs([start], [end], [5], [2 * Math.pow(10, 12)], [mokTokenI.address]);
       const NewMokTokenIIBalance = await mokTokenII.balanceOf(usr1.address);
       const presaleServiceBalance = await mokTokenII.balanceOf(
         presaleService.address
@@ -132,7 +132,9 @@ describe("tests for presaleService contract: ", function () {
       const oldUsrBalance = await provider.getBalance(usr1.address);
       await network.provider.send("evm_increaseTime", [30 * 60]);
       await network.provider.send("evm_mine");
-      await presaleService.connect(usr1).buy(0, 1, { value: 5 });
+      const info = await presaleService.presaleAddress(0);
+      const price = info.price;
+      await expect(presaleService.connect(usr1).buy(0, 1, { value: 5 })).to.emit(presaleService, "Buy").withArgs(usr1.address, 0, price, 1);
 
       const TokenBalance = await mokTokenII.balanceOf(usr1.address);
       const newEthBalance = await provider.getBalance(presaleService.address);
@@ -189,7 +191,7 @@ describe("tests for presaleService contract: ", function () {
       await network.provider.send("evm_increaseTime", [50 * 60]);
       await network.provider.send("evm_mine");
       const provider = waffle.provider;
-      await presaleService.endPresale(0);
+      await expect(presaleService.endPresale(0)).to.emit(presaleService, "EndPresale").withArgs(0, 19000000, 2, mokTokenIII.address)
       const pairaddress = await factory.getPair(
         mokTokenIII.address,
         weth.address
@@ -254,7 +256,7 @@ describe("tests for presaleService contract: ", function () {
       await network.provider.send("evm_mine");
       await presaleService.connect(admin).endPresale(0);
       const tokenAmount = await mokTokenIII.balanceOf(presaleService.address);
-      await presaleService.connect(usr2).withdraw(0);
+      await expect(presaleService.connect(usr2).withdraw(0)).to.emit(presaleService, "WithDraw").withArgs(0, 198);
       const balance = await mokTokenIII.balanceOf(usr1.address);
       expect(balance).to.equal(2);
       expect(tokenAmount).to.equal(198);
@@ -269,7 +271,7 @@ describe("tests for presaleService contract: ", function () {
     });
 
     it("should succeed and change the usageFee", async () => {
-      await presaleService.connect(admin).changeUsageFee(20);
+      await expect(presaleService.connect(admin).changeUsageFee(20)).to.emit(presaleService, "ChangeUsageFee").withArgs(0, 1000000, 20);
       const newUsageFee = await presaleService.usageFee();
       expect(newUsageFee).to.equal(20);
     });
