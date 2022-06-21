@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "hardhat/console.sol";
 
 contract PresaleService is AccessControl{
   using Counters for Counters.Counter;
@@ -20,7 +19,7 @@ contract PresaleService is AccessControl{
   struct presaleInfo{
     uint start;
     uint end;
-    uint price;   // token / eth, 0 < price <= 10e4
+    uint price;   // problem:  wei / token(wei), 0 < price <= 10e4  10000000 /10000 
     uint FirstAmount;
     uint NewestAmount;
     uint weth;    // weth amount in wei
@@ -37,12 +36,14 @@ contract PresaleService is AccessControl{
   event ChangeUsageFee(uint oldUsageFee, uint newUsageFee);
 
   constructor(uint initialusageFee, address initialadmin, address _router){
+    // suggestion: use basis point for usage fee
     usageFee = initialusageFee;
     _setupRole(DEFAULT_ADMIN_ROLE, initialadmin);
     admin = payable(initialadmin);
     router = _router;
   }
 
+  // Suggestions: encapsulate the parameters into a struct
   function startPresale(uint[] memory start, uint[] memory end, uint[] memory price, uint[] memory tokenAmounts, ERC20[] memory tokenAddress) external{
     require(start.length == end.length, "the entered inputs should have the same length");
     require(start.length == price.length, "the entered inputs should have the same length");
@@ -63,11 +64,11 @@ contract PresaleService is AccessControl{
     require(block.timestamp <= presaleAddress[presaleid].end, "the current time has passed the end time of this presale");
 
     require(amountMantissa <= presaleAddress[presaleid].NewestAmount, "the buy amount exceed the stored amount");
-
-    uint wethAmount = amountMantissa * 1e18 / presaleAddress[presaleid].price * 10000;
+    uint wethAmount = amountMantissa * presaleAddress[presaleid].price / 10000 / 10000;
     require(msg.value >= wethAmount, "You should send more eth to purchase this amount of token");
     presaleAddress[presaleid].NewestAmount -= amountMantissa;
-    presaleAddress[presaleid].weth += wethAmount;
+    presaleAddress[presaleid].weth += msg.value;
+    ERC20(presaleAddress[presaleid].tokenaddress).increaseAllowance(address(this), amountMantissa);
     ERC20(presaleAddress[presaleid].tokenaddress).safeTransferFrom(address(this), msg.sender, amountMantissa);
 
 
@@ -78,7 +79,10 @@ contract PresaleService is AccessControl{
   function withdraw(uint presaleid) external{
     require(msg.sender == presaleAddress[presaleid].creator, "Only the creator could withdraw");
     require(presaleAddress[presaleid].ended, "This presale has not been ended");
+    require(presaleAddress[presaleid].NewestAmount > 0, "There is no token for you to withdraw");
     uint balances = IERC20(presaleAddress[presaleid].tokenaddress).balanceOf(address(this));
+    presaleAddress[presaleid].NewestAmount = 0;
+    ERC20(presaleAddress[presaleid].tokenaddress).increaseAllowance(address(this), balances);
     ERC20(presaleAddress[presaleid].tokenaddress).safeTransferFrom(address(this), msg.sender, balances);
 
     emit WithDraw(presaleId.current() - 1, balances);
@@ -87,12 +91,14 @@ contract PresaleService is AccessControl{
   function endPresale(uint presaleid) external{
     require(block.timestamp > presaleAddress[presaleid].end, "The end timestamp has not been passed yet");
     presaleAddress[presaleid].ended = true;
-    uint ethToSend = presaleAddress[presaleid].weth - usageFee;
+    uint ethToSend = presaleAddress[presaleid].weth - usageFee; // minus presaleAddress[presaleid].weth times usagefee / 10000
     uint tokenAmountMantissa = presaleAddress[presaleid].FirstAmount - presaleAddress[presaleid].NewestAmount;
     admin.transfer(usageFee);
     // the below line sends the token from this contract address instead of from the one who calls the end presale
-    IERC20(presaleAddress[presaleid].tokenaddress).transferFrom(msg.sender, address(this), tokenAmountMantissa);                                        
-    IUniswapV2Router02(router).addLiquidityETH{value: ethToSend}(presaleAddress[presaleid].tokenaddress, tokenAmountMantissa, tokenAmountMantissa, ethToSend, address(this), block.timestamp + 20 minutes);
+    // IERC20(presaleAddress[presaleid].tokenaddress).transferFrom(msg.sender, address(this), tokenAmountMantissa);
+    ERC20(presaleAddress[presaleid].tokenaddress).safeTransferFrom(msg.sender, address(this),tokenAmountMantissa);
+    ERC20(presaleAddress[presaleid].tokenaddress).increaseAllowance(router, tokenAmountMantissa);                                      
+    IUniswapV2Router02(router).addLiquidityETH{value: ethToSend}(presaleAddress[presaleid].tokenaddress, tokenAmountMantissa, tokenAmountMantissa, ethToSend, address(this), block.timestamp + 5 minutes);
     emit EndPresale(presaleid, ethToSend, tokenAmountMantissa, presaleAddress[presaleid].tokenaddress);
   }
 
