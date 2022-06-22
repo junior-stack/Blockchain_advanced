@@ -8,7 +8,10 @@ const hre = require("hardhat");
 async function main() {
   // We get the contract to deploy
   const PresaleService = await ethers.getContractFactory("PresaleService");
+
+  const MokTokenI = await ethers.getContractFactory("MokTokenI");
   [admin, usr1, usr2] = await ethers.getSigners();
+  const mokTokenI = await MokTokenI.deploy(500);
   const presaleService = await PresaleService.deploy(
     100,
     admin.address,
